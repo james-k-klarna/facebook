@@ -438,35 +438,76 @@
         centralGroup.position.set(0, 0, 0);
         scene.add(centralGroup);
         
-        // Create ASCII art face using canvas texture
+        // Create detailed ASCII art face using canvas texture
         const faceGroup = new THREE.Group();
         
-        // Create canvas for ASCII art face
+        // Create canvas for ASCII art face (100x100 pixels)
         const faceCanvas = document.createElement('canvas');
-        faceCanvas.width = 128;
-        faceCanvas.height = 128;
+        faceCanvas.width = 100;
+        faceCanvas.height = 100;
         const faceCtx = faceCanvas.getContext('2d');
         
         // Clear canvas with transparent background
-        faceCtx.clearRect(0, 0, 128, 128);
+        faceCtx.clearRect(0, 0, 100, 100);
         
-        // ASCII art face pattern (8x8 grid)
+        // Detailed ASCII art face pattern (50x50 grid for 100x100 pixels)
         const facePattern = [
-            "  ████  ",
-            " ██████ ",
-            "████████",
-            "██  ██  ",
-            "██  ██  ",
-            " ██████ ",
-            "  ████  ",
-            "   ██   "
+            "                    ████████                    ",
+            "                ████████████████                ",
+            "            ████████████████████████            ",
+            "        ████████████████████████████████        ",
+            "    ████████████████████████████████████████    ",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████",
+            "████████████████████████████████████████████████"
         ];
         
-        const pixelSize = 16; // 128/8 = 16 pixels per character
+        const pixelSize = 2; // 100/50 = 2 pixels per character
         const faceWidth = facePattern[0].length;
         const faceHeight = facePattern.length;
         
-        // Draw ASCII art to canvas
+        // Draw detailed ASCII art to canvas
         faceCtx.font = `${pixelSize}px monospace`;
         faceCtx.textAlign = 'left';
         faceCtx.textBaseline = 'top';
@@ -477,14 +518,31 @@
                     const pixelX = x * pixelSize;
                     const pixelY = y * pixelSize;
                     
-                    // Check if this is an eye position (red eyes)
-                    const isLeftEye = (x === 2 || x === 3) && (y === 3 || y === 4);
-                    const isRightEye = (x === 6 || x === 7) && (y === 3 || y === 4);
+                    // Define face regions for different colors
+                    const centerX = faceWidth / 2;
+                    const centerY = faceHeight / 2;
+                    const distanceFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
                     
-                    if (isLeftEye || isRightEye) {
+                    // Eye regions (red) - positioned to look up at camera
+                    const leftEyeX = centerX - 8;
+                    const rightEyeX = centerX + 8;
+                    const eyeY = centerY - 5;
+                    const eyeRadius = 3;
+                    
+                    const leftEyeDistance = Math.sqrt((x - leftEyeX) ** 2 + (y - eyeY) ** 2);
+                    const rightEyeDistance = Math.sqrt((x - rightEyeX) ** 2 + (y - eyeY) ** 2);
+                    
+                    if (leftEyeDistance <= eyeRadius || rightEyeDistance <= eyeRadius) {
                         faceCtx.fillStyle = '#ff0000'; // Red for eyes
+                    } else if (distanceFromCenter <= 20) {
+                        // Face outline (green)
+                        faceCtx.fillStyle = '#00ff00';
+                    } else if (distanceFromCenter <= 22) {
+                        // Face border (darker green)
+                        faceCtx.fillStyle = '#00cc00';
                     } else {
-                        faceCtx.fillStyle = '#00ff00'; // Green for face
+                        // Background (transparent)
+                        continue;
                     }
                     
                     faceCtx.fillText(row[x], pixelX, pixelY);
@@ -498,29 +556,42 @@
         faceTexture.magFilter = THREE.NearestFilter;
         faceTexture.encoding = THREE.sRGBEncoding;
         
-        // Create plane geometry for the face
-        const faceGeometry = new THREE.PlaneGeometry(4, 4);
+        // Create plane geometry for the face (flat, horizontal)
+        const faceGeometry = new THREE.PlaneGeometry(6, 6);
         const faceMaterial = new THREE.MeshBasicMaterial({ 
             map: faceTexture,
             transparent: true,
-            opacity: 0.9
+            opacity: 0.9,
+            side: THREE.DoubleSide
         });
         
         const faceMesh = new THREE.Mesh(faceGeometry, faceMaterial);
-        faceMesh.position.set(0, -8, 0);
+        // Position face flat on the ground, looking up at camera
+        faceMesh.position.set(0, -10, 0);
+        faceMesh.rotation.x = -Math.PI / 2; // Rotate to be flat/horizontal
         
-        // Add click functionality for eyes
+        // Add click functionality for eyes (updated coordinates for 50x50 grid)
         faceMesh.userData = { 
             isFace: true,
             eyePositions: [
-                { x: 2, y: 3, type: 'left' },
-                { x: 3, y: 3, type: 'left' },
-                { x: 6, y: 3, type: 'right' },
-                { x: 7, y: 3, type: 'right' },
-                { x: 2, y: 4, type: 'left' },
-                { x: 3, y: 4, type: 'left' },
-                { x: 6, y: 4, type: 'right' },
-                { x: 7, y: 4, type: 'right' }
+                // Left eye (centerX - 8, centerY - 5) with radius 3
+                { x: 17, y: 20, type: 'left' }, // centerX=25, centerY=25, so 25-8=17, 25-5=20
+                { x: 18, y: 20, type: 'left' },
+                { x: 19, y: 20, type: 'left' },
+                { x: 20, y: 20, type: 'left' },
+                { x: 17, y: 21, type: 'left' },
+                { x: 18, y: 21, type: 'left' },
+                { x: 19, y: 21, type: 'left' },
+                { x: 20, y: 21, type: 'left' },
+                // Right eye (centerX + 8, centerY - 5) with radius 3
+                { x: 30, y: 20, type: 'right' }, // centerX=25, centerY=25, so 25+8=33, 25-5=20
+                { x: 31, y: 20, type: 'right' },
+                { x: 32, y: 20, type: 'right' },
+                { x: 33, y: 20, type: 'right' },
+                { x: 30, y: 21, type: 'right' },
+                { x: 31, y: 21, type: 'right' },
+                { x: 32, y: 21, type: 'right' },
+                { x: 33, y: 21, type: 'right' }
             ]
         };
         
@@ -789,9 +860,9 @@
                     const intersection = faceIntersects[0];
                     const uv = intersection.uv;
                     
-                    // Convert UV coordinates to grid position
-                    const gridX = Math.floor(uv.x * 8);
-                    const gridY = Math.floor(uv.y * 8);
+                    // Convert UV coordinates to grid position (50x50 grid)
+                    const gridX = Math.floor(uv.x * 50);
+                    const gridY = Math.floor(uv.y * 50);
                     
                     // Check if clicked on an eye
                     const eyePositions = faceMesh.userData.eyePositions;
