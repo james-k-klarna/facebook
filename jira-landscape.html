@@ -443,12 +443,7 @@
         
         // Create canvas for detailed face (200x200 pixels for better detail)
         const faceCanvas = document.createElement('canvas');
-        faceCanvas.width = 200;
-        faceCanvas.height = 200;
         const faceCtx = faceCanvas.getContext('2d');
-        
-        // Clear canvas with transparent background
-        faceCtx.clearRect(0, 0, 200, 200);
         
         // Unused pattern - keeping for reference
         const facePattern_old = [
@@ -503,12 +498,17 @@
             "████████████████████████████████████████████████"
         ];
         
-        // Draw face programmatically - looks up at camera from top view
-        const centerX = 100;
-        const centerY = 100;
+        // Create canvas for detailed face - larger for detailed ASCII art
+        const patternWidth = 81; // characters per row in asciiStyle1
+        const patternHeight = 160; // rows in asciiStyle1
+        const fontSize = 2; // smaller font to fit more detail
+        faceCanvas.width = patternWidth * fontSize;
+        faceCanvas.height = patternHeight * fontSize;
+        faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
         
         // Draw ASCII art terminal-style face - facial recognition look
-        const fontSize = 4;
+        const centerX = faceCanvas.width / 2;
+        const centerY = faceCanvas.height / 2;
         faceCtx.font = `${fontSize}px monospace`;
         faceCtx.textAlign = 'center';
         faceCtx.textBaseline = 'middle';
@@ -1129,21 +1129,19 @@
                     
                     // Check if clicked on an eye
                     // For ASCII face: eyes are at rows 6-8 (y: 6-8), columns 8-11 (left, x: 8-11) and 17-20 (right, x: 17-20)
-                    // In 200x200 canvas with fontSize 4, each character is about 4 pixels
-                    // Eye regions in ASCII pattern:
-                    const fontSize = 4;
-                    const asciiWidth = 24; // characters per row
-                    const asciiHeight = 16; // rows
+                    // For detailed ASCII pattern: calculate character position
                     const charX = Math.floor(pixelX / fontSize);
                     const charY = Math.floor(pixelY / fontSize);
                     
                     console.log('Character position in ASCII grid:', charX, charY);
                     
-                    // Eye positions in ASCII grid
-                    const leftEyeStartX = 8;
-                    const rightEyeStartX = 17;
-                    const eyeRowStart = 6;
-                    const eyeRowEnd = 8;
+                    // Eye positions in detailed ASCII grid (rows 40-45, columns 25-30 left, 50-55 right)
+                    const leftEyeStartX = 25;
+                    const leftEyeEndX = 30;
+                    const rightEyeStartX = 50;
+                    const rightEyeEndX = 55;
+                    const eyeRowStart = 40;
+                    const eyeRowEnd = 45;
                     
                     const isLeftEye = (charX >= leftEyeStartX && charX <= leftEyeEndX) && 
                                      (charY >= eyeRowStart && charY <= eyeRowEnd);
