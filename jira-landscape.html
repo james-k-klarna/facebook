@@ -507,13 +507,86 @@
         const centerX = 100;
         const centerY = 100;
         
-        // Draw face outline (oval shape when viewed from above)
-        faceCtx.fillStyle = '#00ff00';
-        faceCtx.beginPath();
-        faceCtx.ellipse(centerX, centerY, 75, 90, 0, 0, Math.PI * 2);
-        faceCtx.fill();
+        // Draw ASCII art terminal-style face - facial recognition look
+        const fontSize = 4;
+        faceCtx.font = `${fontSize}px monospace`;
+        faceCtx.textAlign = 'center';
+        faceCtx.textBaseline = 'middle';
+        
+        // ASCII art face pattern - terminal/facial recognition style
+        const asciiFace = [
+            "        ████████████        ",
+            "      ████████████████      ",
+            "    ████████████████████    ",
+            "  ████████████████████████  ",
+            "  ████████████████████████  ",
+            "  ████████████████████████  ",
+            "  ████    ████    ████████  ",
+            "  ████    ████    ████████  ",
+            "  ████    ████    ████████  ",
+            "  ████████████████████████  ",
+За"  ████████████████████████  ",
+            "  ████████████████████████  ",
+            "  ████████████████████████  ",
+            "    ████████████████████    ",
+            "      ████████████████      ",
+            "        ████████████        "
+        ];
+        
+        // Draw ASCII face
+        asciiFace.forEach((row, y) => {
+            for (let x = 0; x < row.length; x++) {
+                const char = row[x];
+                if (char !== ' ') {
+                    const pixelX = centerX - (row.length * fontSize) / 2 + (x * fontSize);
+                    const pixelY = centerY - (asciiFace.length * fontSize) / 2 + (y * fontSize);
+                    
+                    // Eye positions in ASCII grid (rows 6-8, columns 8-11 left, 17-20 right)
+                    const leftEyeStart = 8;
+                    const rightEyeStart = 17;
+                    const eyeRow = 6;
+                    const isLeftEye = (x >= leftEyeStart && x < leftEyeStart + 4) && (y >= eyeRow && y <= eyeRow + 2);
+                    const isRightEye = (x >= rightEyeStart && x < rightEyeStart + 4) && (y >= eyeRow && y <= eyeRow + 2);
+                    
+                    if (isLeftEye || isRightEye) {
+                        faceCtx.fillStyle = '#ff0000'; // Red for eyes
+                    } else {
+                        faceCtx.fillStyle = '#00ff00'; // Green for face
+                    }
+                    
+                    faceCtx.fillText(char, pixelX, pixelY);
+                }
+            }
+        });
+        
+        // Add facial recognition grid overlay
+        faceCtx.strokeStyle = '#00ff00';
+        faceCtx.lineWidth = 0.5;
+        faceCtx.globalAlpha = 0.3;
+        
+        for (let i = 0; i < 5; i++) {
+            faceCtx.beginPath();
+            faceCtx.moveTo(centerX - 40 + (i * 20), centerY - 50);
+            faceCtx.lineTo(centerX - 40 + (i * 20), centerY + 50);
+            faceCtx.stroke();
+        }
+        
+        for (let i = 0; i < 5; i++) {
+            faceCtx.beginPath();
+            faceCtx.moveTo(centerX - 40, centerY - 50 + (i * 25));
+            faceCtx.lineTo(centerX + 40, centerY - 50 + (i * 25));
+            faceCtx.stroke();
+        }
+        
+        faceCtx.globalAlpha = 1.0;
+        
+        console.log('ASCII face drawn successfully - terminal/facial recognition style');
+        
+        // Old drawing code removed - using ASCII art above
         
         // Draw darker green border
+        // Old cartoony drawing code disabled - using ASCII art above
+        if (false) { // Skip old drawing code
         faceCtx.strokeStyle = '#00cc00';
         faceCtx.lineWidth = 4;
         faceCtx.beginPath();
@@ -572,6 +645,7 @@
         faceCtx.imageSmoothingEnabled = false;
         faceCtx.clearRect(0, 0, 200, 200);
         faceCtx.drawImage(tempCanvas, 0, 0, 200, 200);
+        } // End of disabled old drawing code
         
         // Create texture from canvas
         const faceTexture = new THREE.CanvasTexture(faceCanvas);
@@ -872,39 +946,74 @@
         }
         
         function onMouseClick(event) {
+            console.log('=== CLICK EVENT ===');
+            console.log('Mouse position:', mouse.x, mouse.y);
+            console.log('Camera position:', camera.position);
+            
             raycaster.setFromCamera(mouse, camera);
             
             // Check for face clicks first
+            console.log('Checking face intersections...');
             const faceIntersects = raycaster.intersectObjects(faceGroup.children, true);
+            console.log('Face intersects found:', faceIntersects.length);
+            
             if (faceIntersects.length > 0) {
                 const faceMesh = faceIntersects[0].object;
+                console.log('Face mesh clicked:', faceMesh);
+                console.log('Face mesh userData:', faceMesh.userData);
+                
                 if (faceMesh.userData && faceMesh.userData.isFace) {
                     // Calculate which part of the face was clicked
                     const intersection = faceIntersects[0];
                     const uv = intersection.uv;
                     
+                    console.log('UV coordinates:', uv);
+                    
                     // Convert UV coordinates to pixel position (200x200 canvas)
                     const pixelX = Math.floor(uv.x * 200);
                     const pixelY = Math.floor(uv.y * 200);
                     
-                    // Check if clicked on an eye (left eye at ~72,80, right eye at ~128,80)
-                    const centerX = 100;
-                    const centerY = 100;
-                    const leftEyeX = centerX - 28;
-                    const rightEyeX = centerX + 28;
-                    const eyeY = centerY - 20;
-                    const eyeRadius = 10;
+                    console.log('Pixel position:', pixelX, pixelY);
                     
-                    const leftEyeDistance = Math.sqrt((pixelX - leftEyeX) ** 2 + (pixelY - eyeY) ** 2);
-                    const rightEyeDistance = Math.sqrt((pixelX - rightEyeX) ** 2 + (pixelY - eyeY) ** 2);
+                    // Check if clicked on an eye
+                    // For ASCII face: eyes are at rows 6-8 (y: 6-8), columns 8-11 (left, x: 8-11) and 17-20 (right, x: 17-20)
+                    // In 200x200 canvas with fontSize 4, each character is about 4 pixels
+                    // Eye regions in ASCII pattern:
+                    const fontSize = 4;
+                    const asciiWidth = 24; // characters per row
+                    const asciiHeight = 16; // rows
+                    const charX = Math.floor(pixelX / fontSize);
+                    const charY = Math.floor(pixelY / fontSize);
                     
-                    if (leftEyeDistance <= eyeRadius || rightEyeDistance <= eyeRadius) {
-                        console.log('Clicked on eye - opening case file');
+                    console.log('Character position in ASCII grid:', charX, charY);
+                    
+                    // Eye positions in ASCII grid
+                    const leftEyeStartX = 8;
+                    const rightEyeStartX = 17;
+                    const eyeRowStart = 6;
+                    const eyeRowEnd = 8;
+                    
+                    const isLeftEye = (charX >= leftEyeStartX && charX < leftEyeStartX + 4) && 
+                                     (charY >= eyeRowStart && charY <= eyeRowEnd);
+                    const isRightEye = (charX >= rightEyeStartX && charX < rightEyeStartX + 4) && 
+                                      (charY >= eyeRowStart && charY <= eyeRowEnd);
+                    
+                    console.log('Is left eye?', isLeftEye);
+                    console.log('Is right eye?', isRightEye);
+                    
+                    if (isLeftEye || isRightEye) {
+                        console.log('✓✓✓ EYE CLICKED - Opening case file! ✓✓✓');
                         // Open John Smith case file
                         window.location.href = 'john-smith.html';
                         return;
+                    } else {
+                        console.log('Face clicked but not on eye region');
                     }
+                } else {
+                    console.log('Face mesh does not have isFace userData');
                 }
+            } else {
+                console.log('No face intersection detected');
             }
             
             // Check for notification card clicks
