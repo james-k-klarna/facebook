@@ -46,11 +46,6 @@
 </head>
 <body>
     <div id="container">
-        <div id="info">
-            <h3>Jira Notification Landscape</h3>
-            <p>Use mouse to rotate and zoom</p>
-            <p>Scroll to zoom in/out</p>
-        </div>
         
         <div id="controls">
             <p><strong>Controls:</strong></p>
@@ -443,6 +438,69 @@
         centralGroup.position.set(0, 0, 0);
         scene.add(centralGroup);
         
+        // Create pixelized face below the Jira image
+        const faceGroup = new THREE.Group();
+        
+        // Create ASCII/pixelized face using small cubes
+        const faceData = [
+            "  ████  ",
+            " ██████ ",
+            "████████",
+            "██  ██  ",
+            "██  ██  ",
+            " ██████ ",
+            "  ████  "
+        ];
+        
+        const pixelSize = 0.3;
+        const faceWidth = faceData[0].length;
+        const faceHeight = faceData.length;
+        
+        faceData.forEach((row, y) => {
+            for (let x = 0; x < row.length; x++) {
+                if (row[x] !== ' ') {
+                    const pixelGeometry = new THREE.BoxGeometry(pixelSize, pixelSize, pixelSize);
+                    let pixelMaterial;
+                    
+                    // Check if this is an eye position (red eyes)
+                    const isLeftEye = (x === 2 || x === 3) && (y === 3 || y === 4);
+                    const isRightEye = (x === 6 || x === 7) && (y === 3 || y === 4);
+                    
+                    if (isLeftEye || isRightEye) {
+                        pixelMaterial = new THREE.MeshBasicMaterial({ 
+                            color: 0xff0000,
+                            transparent: true,
+                            opacity: 0.9
+                        });
+                    } else {
+                        pixelMaterial = new THREE.MeshBasicMaterial({ 
+                            color: 0x00ff00,
+                            transparent: true,
+                            opacity: 0.8
+                        });
+                    }
+                    
+                    const pixel = new THREE.Mesh(pixelGeometry, pixelMaterial);
+                    pixel.position.set(
+                        (x - faceWidth/2) * pixelSize,
+                        -(y - faceHeight/2) * pixelSize,
+                        0
+                    );
+                    
+                    // Add click functionality for eyes
+                    if (isLeftEye || isRightEye) {
+                        pixel.userData = { isEye: true, eyeType: isLeftEye ? 'left' : 'right' };
+                    }
+                    
+                    faceGroup.add(pixel);
+                }
+            }
+        });
+        
+        // Position face below the Jira image
+        faceGroup.position.set(0, -8, 0);
+        scene.add(faceGroup);
+        
         // Create Matrix-style green text rain effect
         const matrixGroup = new THREE.Group();
         const matrixTexts = [];
@@ -666,9 +724,10 @@
         
         // No ground plane - creating a dimensionless void
         
-        // Set camera position
-        camera.position.set(20, 15, 20);
+        // Set camera position for top view
+        camera.position.set(0, 25, 0);
         controls.target.set(0, 0, 0);
+        camera.lookAt(0, 0, 0);
         
         // Animation variables
         let autoRotate = false;
@@ -694,8 +753,21 @@
         
         function onMouseClick(event) {
             raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(notificationGroup.children, true);
             
+            // Check for eye clicks first
+            const faceIntersects = raycaster.intersectObjects(faceGroup.children, true);
+            if (faceIntersects.length > 0) {
+                const pixel = faceIntersects[0].object;
+                if (pixel.userData && pixel.userData.isEye) {
+                    console.log('Clicked on', pixel.userData.eyeType, 'eye');
+                    // Open new page with details about you
+                    window.open('https://github.com/james-k-klarna', '_blank');
+                    return;
+                }
+            }
+            
+            // Check for notification card clicks
+            const intersects = raycaster.intersectObjects(notificationGroup.children, true);
             if (intersects.length > 0) {
                 const card = intersects[0].object.parent;
                 if (card.userData && card.userData.notification) {
@@ -798,6 +870,26 @@
                 // Add slight random movement
                 textMesh.position.x += (Math.random() - 0.5) * 0.005;
                 textMesh.position.z += (Math.random() - 0.5) * 0.005;
+            });
+            
+            // Animate face pixels (subtle floating effect)
+            faceGroup.children.forEach((pixel, index) => {
+                pixel.position.y += Math.sin(time * 2 + index) * 0.001;
+                pixel.rotation.y += 0.01;
+                
+                // Add hover effect for eyes
+                if (pixel.userData && pixel.userData.isEye) {
+                    raycaster.setFromCamera(mouse, camera);
+                    const intersects = raycaster.intersectObjects([pixel]);
+                    
+                    if (intersects.length > 0) {
+                        pixel.scale.set(1.2, 1.2, 1.2);
+                        pixel.material.opacity = 1.0;
+                    } else {
+                        pixel.scale.set(1, 1, 1);
+                        pixel.material.opacity = 0.9;
+                    }
+                }
             });
             
             // Animate Matrix particles
