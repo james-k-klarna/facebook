@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jira Notification Landscape</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="info">
+            <h3>Jira Notification Landscape</h3>
+            <p>Use mouse to rotate and zoom</p>
+            <p>Scroll to zoom in/out</p>
+        </div>
+        
+        <div id="controls">
+            <p><strong>Controls:</strong></p>
+            <p>• Left click + drag: Rotate camera</p>
+            <p>• Right click + drag: Pan camera</p>
+            <p>• Scroll wheel: Zoom in/out</p>
+            <p>• Space: Toggle auto-rotation</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x1a1a2e);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        
+        // Fix texture rendering issues
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.NoToneMapping;
+        
+        document.getElementById('container').appendChild(renderer.domElement);
+        
+        // Controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.enableZoom = true;
+        controls.autoRotate = false;
+        controls.autoRotateSpeed = 0.5;
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+        
+        // Jira notification data
+        const jiraNotifications = [
+            { id: 'SD-25818', title: 'Finalize() call is triggered', time: '3:08 PM' },
+            { id: 'SD-25820', title: 'Update Customer Shipping', time: '3:08 PM' },
+            { id: 'SD-25821', title: 'Auto-capture (requires approval)', time: '3:07 PM' },
+            { id: 'SD-25822', title: 'Update Order Amount / Order', time: '3:07 PM' },
+            { id: 'SD-25823', title: 'Release Remaining Authorization', time: '3:07 PM' },
+            { id: 'SD-25824', title: 'Sensitive goods (Pharmacy)', time: '3:06 PM' },
+            { id: 'SD-25825', title: 'Extend Authorization Auto', time: '3:06 PM' },
+            { id: 'SD-25826', title: 'Cart Page Automation for', time: '3:06 PM' },
+            { id: 'SD-25827', title: 'On-Site Messaging API Auto', time: '3:05 PM' },
+            { id: 'SD-25828', title: 'Order with one item - Con', time: '3:05 PM' },
+            { id: 'SD-25829', title: 'Gift cards Automation for', time: '3:05 PM' },
+            { id: 'SD-25830', title: 'Customer data validation', time: '3:04 PM' },
+            { id: 'SD-25831', title: 'Validate separate order li', time: '3:04 PM' },
+            { id: 'SD-25832', title: 'Order Confirmation Cont', time: '3:04 PM' },
+            { id: 'SD-25833', title: 'Update Merchant Reference', time: '3:03 PM' },
+            { id: 'SD-25834', title: 'Partial Refund after Full c', time: '3:03 PM' },
+            { id: 'SD-25835', title: 'Product Detail Page Auto', time: '3:03 PM' },
+            { id: 'SD-25836', title: 'Review order placement', time: '3:02 PM' },
+            { id: 'SD-25837', title: 'Cancel order Automation', time: '3:02 PM' },
+            { id: 'SD-25838', title: 'Add Shipping Information', time: '3:02 PM' },
+            { id: 'SD-25839', title: 'Cart Page - Disabled out', time: '3:01 PM' },
+            { id: 'SD-25840', title: 'Logos and Banners Auto', time: '3:01 PM' }
+        ];
+        
+        // Create notification card geometry
+        function createNotificationCard(notification, index) {
+            const group = new THREE.Group();
+            
+            // Card background with realistic Jira styling
+            const cardGeometry = new THREE.PlaneGeometry(3.2, 1.8);
+            const cardMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.95
+            });
+            const card = new THREE.Mesh(cardGeometry, cardMaterial);
+            card.receiveShadow = true;
+            card.castShadow = true;
+            group.add(card);
+            
+            // Card border with Jira blue
+            const borderGeometry = new THREE.PlaneGeometry(3.3, 1.9);
+            const borderMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x0052cc,
+                transparent: true,
+                opacity: 0.3
+            });
+            const border = new THREE.Mesh(borderGeometry, borderMaterial);
+            border.position.z = -0.01;
+            group.add(border);
+            
+            // Left border accent (Jira blue)
+            const leftAccentGeometry = new THREE.PlaneGeometry(0.1, 1.8);
+            const leftAccentMaterial = new THREE.MeshLambertMaterial({ color: 0x0052cc });
+            const leftAccent = new THREE.Mesh(leftAccentGeometry, leftAccentMaterial);
+            leftAccent.position.set(-1.55, 0, 0.01);
+            group.add(leftAccent);
+            
+            // Checkbox (unchecked)
+            const checkboxGeometry = new THREE.PlaneGeometry(0.2, 0.2);
+            const checkboxMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.9
+            });
+            const checkbox = new THREE.Mesh(checkboxGeometry, checkboxMaterial);
+            checkbox.position.set(-1.3, 0.5, 0.01);
+            group.add(checkbox);
+            
+            // Checkbox border
+            const checkboxBorderGeometry = new THREE.PlaneGeometry(0.22, 0.22);
+            const checkboxBorderMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0xcccccc,
+                transparent: true,
+                opacity: 0.8
+            });
+            const checkboxBorder = new THREE.Mesh(checkboxBorderGeometry, checkboxBorderMaterial);
+            checkboxBorder.position.set(-1.3, 0.5, 0.005);
+            group.add(checkboxBorder);
+            
+            // Star icon (favorited)
+            const starGeometry = new THREE.PlaneGeometry(0.18, 0.18);
+            const starMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0xffd700,
+                transparent: true,
+                opacity: 0.9
+            });
+            const star = new THREE.Mesh(starGeometry, starMaterial);
+            star.position.set(-1.0, 0.5, 0.01);
+            group.add(star);
+            
+            // Priority indicator (red dot for high priority)
+            const priorityGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+            const priorityMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0xff4444,
+                transparent: true,
+                opacity: 0.9
+            });
+            const priority = new THREE.Mesh(priorityGeometry, priorityMaterial);
+            priority.position.set(-1.0, 0.1, 0.01);
+            group.add(priority);
+            
+            // Text elements with better styling
+            const textColor = 0x333333;
+            const lightTextColor = 0x666666;
+            
+            // Issue ID (bold, blue)
+            const idGeometry = new THREE.PlaneGeometry(0.9, 0.15);
+            const idMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x0052cc,
+                transparent: true,
+                opacity: 0.9
+            });
+            const idText = new THREE.Mesh(idGeometry, idMaterial);
+            idText.position.set(-0.4, 0.1, 0.01);
+            group.add(idText);
+            
+            // Title text (main content)
+            const titleGeometry = new THREE.PlaneGeometry(2.2, 0.12);
+            const titleMaterial = new THREE.MeshLambertMaterial({ 
+                color: textColor,
+                transparent: true,
+                opacity: 0.9
+            });
+            const title = new THREE.Mesh(titleGeometry, titleMaterial);
+            title.position.set(0.3, -0.1, 0.01);
+            group.add(title);
+            
+            // Time text (right aligned, smaller)
+            const timeGeometry = new THREE.PlaneGeometry(0.5, 0.1);
+            const timeMaterial = new THREE.MeshLambertMaterial({ 
+                color: lightTextColor,
+                transparent: true,
+                opacity: 0.8
+            });
+            const timeText = new THREE.Mesh(timeGeometry, timeMaterial);
+            timeText.position.set(1.2, 0.5, 0.01);
+            group.add(timeText);
+            
+            // Status indicator (green for "In Progress")
+            const statusGeometry = new THREE.PlaneGeometry(0.3, 0.08);
+            const statusMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x00aa44,
+                transparent: true,
+                opacity: 0.9
+            });
+            const status = new THREE.Mesh(statusGeometry, statusMaterial);
+            status.position.set(0.3, -0.3, 0.01);
+            group.add(status);
+            
+            // Assignee avatar placeholder
+            const avatarGeometry = new THREE.SphereGeometry(0.12, 8, 8);
+            const avatarMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x0052cc,
+                transparent: true,
+                opacity: 0.8
+            });
+            const avatar = new THREE.Mesh(avatarGeometry, avatarMaterial);
+            avatar.position.set(1.2, -0.1, 0.01);
+            group.add(avatar);
+            
+            // Add subtle shadow under each card
+            const shadowGeometry = new THREE.PlaneGeometry(3.4, 2.0);
+            const shadowMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x000000,
+                transparent: true,
+                opacity: 0.1
+            });
+            const shadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
+            shadow.rotation.x = -Math.PI / 2;
+            shadow.position.y = -0.1;
+            group.add(shadow);
+            
+            // Position cards in a landscape formation
+            const radius = 15 + (index % 3) * 5;
+            const angle = (index / jiraNotifications.length) * Math.PI * 2;
+            const height = Math.sin(angle * 2) * 3 + (index % 4) * 2;
+            
+            group.position.set(
+                Math.cos(angle) * radius,
+                height,
+                Math.sin(angle) * radius
+            );
+            
+            // Rotate cards to face center
+            group.lookAt(0, group.position.y, 0);
+            
+            // Add slight random rotation for variety
+            group.rotation.y += (Math.random() - 0.5) * 0.3;
+            group.rotation.x += (Math.random() - 0.5) * 0.2;
+            
+            // Add hover effect data
+            group.userData = {
+                originalY: group.position.y,
+                hovered: false,
+                notification: notification
+            };
+            
+            return group;
+        }
+        
+        // Create all notification cards
+        const notificationGroup = new THREE.Group();
+        jiraNotifications.forEach((notification, index) => {
+            const card = createNotificationCard(notification, index);
+            notificationGroup.add(card);
+        });
+        scene.add(notificationGroup);
+        
+        // Create central rotatable image/object
+        const centralGroup = new THREE.Group();
+        
+        // Load and use the actual screenshot image with proper error handling
+        const textureLoader = new THREE.TextureLoader();
+        
+        // Create a fallback texture for when image fails to load
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 384;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#0052cc';
+        ctx.fillRect(0, 0, 512, 384);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Image Loading...', 256, 192);
+        
+        const fallbackTexture = new THREE.CanvasTexture(canvas);
+        fallbackTexture.encoding = THREE.sRGBEncoding;
+        
+        // Simple image loading for static web servers
+        console.log('Loading image for static web server...');
+        
+        // Load image from GitHub (solves CORS issues for local development)
+        const imageUrl = 'https://raw.githubusercontent.com/james-k-klarna/facebook/main/realjira.png';
+        
+        const screenshotTexture = textureLoader.load(imageUrl, 
+            function(texture) {
+                console.log('Screenshot loaded successfully from GitHub');
+                console.log('Texture dimensions:', texture.image.width, 'x', texture.image.height);
+                
+                // Set proper encoding and properties
+                texture.encoding = THREE.sRGBEncoding;
+                texture.flipY = false;
+                texture.wrapS = THREE.ClampToEdgeWrapping;
+                texture.wrapT = THREE.ClampToEdgeWrapping;
+                
+                // Apply texture to material
+                imageMaterial.map = texture;
+                imageMaterial.needsUpdate = true;
+                
+                console.log('Image applied to material successfully');
+            },
+            function(progress) {
+                console.log('Loading progress:', Math.round(progress.loaded / progress.total * 100) + '%');
+            },
+            function(error) {
+                console.error('Error loading image from GitHub:', error);
+                console.log('Trying local fallback...');
+                
+                // Fallback to local file if GitHub fails
+                textureLoader.load('./realjira.png', 
+                    function(localTexture) {
+                        console.log('Local image loaded successfully');
+                        localTexture.encoding = THREE.sRGBEncoding;
+                        localTexture.flipY = false;
+                        localTexture.wrapS = THREE.ClampToEdgeWrapping;
+                        localTexture.wrapT = THREE.ClampToEdgeWrapping;
+                        
+                        imageMaterial.map = localTexture;
+                        imageMaterial.needsUpdate = true;
+                    },
+                    undefined,
+                    function(localError) {
+                        console.error('Both GitHub and local image failed:', localError);
+                        console.log('Using fallback texture');
+                    }
+                );
+            }
+        );
+        
+        // Create a plane to display the screenshot (much bigger)
+        const imageGeometry = new THREE.PlaneGeometry(8, 6);
+        const imageMaterial = new THREE.MeshBasicMaterial({ 
+            map: fallbackTexture, // Start with fallback
+            transparent: true,
+            opacity: 1.0,
+            side: THREE.DoubleSide,
+            alphaTest: 0.1,
+            color: 0xffffff // Ensure white color
+        });
+        const imagePlane = new THREE.Mesh(imageGeometry, imageMaterial);
+        imagePlane.position.z = 0.1; // Ensure it's in front
+        imagePlane.renderOrder = 1000; // Ensure it renders on top
+        centralGroup.add(imagePlane);
+        
+        // Add some debugging info
+        console.log('Image plane created with geometry:', imageGeometry.parameters);
+        console.log('Image material created with map:', imageMaterial.map);
+        console.log('Image plane position:', imagePlane.position);
+        console.log('Image plane rotation:', imagePlane.rotation);
+        
+        // Ensure proper material setup
+        imageMaterial.color.setHex(0xffffff);
+        imageMaterial.needsUpdate = true;
+        
+        // Add a frame around the image
+        const frameGeometry = new THREE.PlaneGeometry(8.4, 6.4);
+        const frameMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x333333,
+            transparent: true,
+            opacity: 0.8
+        });
+        const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+        frame.position.z = -0.01;
+        centralGroup.add(frame);
+        
+        // Add some floating particles around the center
+        for (let i = 0; i < 20; i++) {
+            const particleGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+            const particleMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x00d4ff,
+                transparent: true,
+                opacity: 0.7
+            });
+            const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+            
+            const radius = 3 + Math.random() * 2;
+            const angle = (i / 20) * Math.PI * 2;
+            particle.position.set(
+                Math.cos(angle) * radius,
+                Math.sin(i) * 2,
+                Math.sin(angle) * radius
+            );
+            
+            centralGroup.add(particle);
+        }
+        
+        centralGroup.position.set(0, 0, 0);
+        scene.add(centralGroup);
+        
+        // Create Matrix-style green text rain effect
+        const matrixGroup = new THREE.Group();
+        const matrixTexts = [];
+        const matrixRadius = 50; // Outer sphere radius
+        
+        // Matrix characters (more authentic set with more numbers and symbols)
+        const matrixChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz@#$%^&*()_+-=[]{}|;:,.<>?~`!@#$%^&*()_+-=[]{}|;:,.<>?アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+        
+        // Create multiple columns of falling text (more dense)
+        for (let col = 0; col < 40; col++) {
+            const columnGroup = new THREE.Group();
+            const columnTexts = [];
+            
+            // Create 50 text elements per column (more dense)
+            for (let i = 0; i < 50; i++) {
+                const textGeometry = new THREE.PlaneGeometry(0.3, 0.4);
+                const textMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x00ff00,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                
+                // Position around the outer sphere
+                const angle = (col / 40) * Math.PI * 2;
+                const height = (i / 50) * 40 - 20; // Spread vertically more
+                const radius = matrixRadius + Math.random() * 10;
+                
+                textMesh.position.set(
+                    Math.cos(angle) * radius,
+                    height,
+                    Math.sin(angle) * radius
+                );
+                
+                // Rotate to face inward
+                textMesh.lookAt(0, height, 0);
+                
+                // Add random properties for animation
+                textMesh.userData = {
+                    originalY: height,
+                    speed: 0.02 + Math.random() * 0.03,
+                    char: matrixChars[Math.floor(Math.random() * matrixChars.length)],
+                    opacity: Math.random() * 0.8 + 0.2
+                };
+                
+                columnGroup.add(textMesh);
+                columnTexts.push(textMesh);
+            }
+            
+            columnGroup.userData = {
+                resetY: 15,
+                columnIndex: col
+            };
+            
+            matrixGroup.add(columnGroup);
+            matrixTexts.push(columnTexts);
+        }
+        
+        scene.add(matrixGroup);
+        
+        // Add additional Matrix rain layers at different distances
+        const matrixGroup2 = new THREE.Group();
+        for (let col = 0; col < 30; col++) {
+            const columnGroup = new THREE.Group();
+            
+            for (let i = 0; i < 40; i++) {
+                const textGeometry = new THREE.PlaneGeometry(0.25, 0.35);
+                const textMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x00ff00,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                
+                const angle = (col / 30) * Math.PI * 2;
+                const height = (i / 40) * 35 - 17.5;
+                const radius = 70 + Math.random() * 15; // Further out
+                
+                textMesh.position.set(
+                    Math.cos(angle) * radius,
+                    height,
+                    Math.sin(angle) * radius
+                );
+                
+                textMesh.lookAt(0, height, 0);
+                textMesh.userData = {
+                    originalY: height,
+                    speed: 0.015 + Math.random() * 0.025,
+                    char: matrixChars[Math.floor(Math.random() * matrixChars.length)],
+                    opacity: Math.random() * 0.6 + 0.2
+                };
+                
+                columnGroup.add(textMesh);
+            }
+            
+            columnGroup.userData = {
+                resetY: 20,
+                columnIndex: col
+            };
+            
+            matrixGroup2.add(columnGroup);
+        }
+        scene.add(matrixGroup2);
+        
+        // Add third layer even further out
+        const matrixGroup3 = new THREE.Group();
+        for (let col = 0; col < 25; col++) {
+            const columnGroup = new THREE.Group();
+            
+            for (let i = 0; i < 35; i++) {
+                const textGeometry = new THREE.PlaneGeometry(0.2, 0.3);
+                const textMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x00ff00,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                
+                const angle = (col / 25) * Math.PI * 2;
+                const height = (i / 35) * 30 - 15;
+                const radius = 90 + Math.random() * 20; // Even further out
+                
+                textMesh.position.set(
+                    Math.cos(angle) * radius,
+                    height,
+                    Math.sin(angle) * radius
+                );
+                
+                textMesh.lookAt(0, height, 0);
+                textMesh.userData = {
+                    originalY: height,
+                    speed: 0.01 + Math.random() * 0.02,
+                    char: matrixChars[Math.floor(Math.random() * matrixChars.length)],
+                    opacity: Math.random() * 0.4 + 0.1
+                };
+                
+                columnGroup.add(textMesh);
+            }
+            
+            columnGroup.userData = {
+                resetY: 18,
+                columnIndex: col
+            };
+            
+            matrixGroup3.add(columnGroup);
+        }
+        scene.add(matrixGroup3);
+        
+        // Add Matrix rain from above and below
+        const matrixVerticalGroup = new THREE.Group();
+        for (let i = 0; i < 100; i++) {
+            const textGeometry = new THREE.PlaneGeometry(0.2, 0.3);
+            const textMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x00ff00,
+                transparent: true,
+                opacity: 0.4
+            });
+            const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+            
+            // Random position in a large sphere
+            const radius = 60 + Math.random() * 40;
+            const angle = Math.random() * Math.PI * 2;
+            const height = (Math.random() - 0.5) * 60; // Spread from -30 to +30
+            
+            textMesh.position.set(
+                Math.cos(angle) * radius,
+                height,
+                Math.sin(angle) * radius
+            );
+            
+            // Face the center
+            textMesh.lookAt(0, height, 0);
+            
+            textMesh.userData = {
+                originalY: height,
+                speed: 0.01 + Math.random() * 0.02,
+                char: matrixChars[Math.floor(Math.random() * matrixChars.length)],
+                opacity: Math.random() * 0.5 + 0.2,
+                direction: Math.random() > 0.5 ? 1 : -1 // Some fall up, some fall down
+            };
+            
+            matrixVerticalGroup.add(textMesh);
+        }
+        scene.add(matrixVerticalGroup);
+        
+        // Add Matrix-style ambient lighting
+        const matrixLight = new THREE.AmbientLight(0x00ff00, 0.1);
+        scene.add(matrixLight);
+        
+        // Add some Matrix-style particles floating around
+        const matrixParticles = new THREE.Group();
+        for (let i = 0; i < 50; i++) {
+            const particleGeometry = new THREE.SphereGeometry(0.02, 4, 4);
+            const particleMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x00ff00,
+            transparent: true,
+            opacity: 0.3
+        });
+            const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+            
+            // Random position in outer sphere
+            const radius = 45 + Math.random() * 10;
+            const angle = Math.random() * Math.PI * 2;
+            const height = (Math.random() - 0.5) * 30;
+            
+            particle.position.set(
+                Math.cos(angle) * radius,
+                height,
+                Math.sin(angle) * radius
+            );
+            
+            particle.userData = {
+                originalRadius: radius,
+                angle: angle,
+                speed: 0.01 + Math.random() * 0.02
+            };
+            
+            matrixParticles.add(particle);
+        }
+        scene.add(matrixParticles);
+        
+        // No ground plane - creating a dimensionless void
+        
+        // Set camera position
+        camera.position.set(20, 15, 20);
+        controls.target.set(0, 0, 0);
+        
+        // Animation variables
+        let autoRotate = false;
+        let time = 0;
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space') {
+                event.preventDefault();
+                autoRotate = !autoRotate;
+                controls.autoRotate = autoRotate;
+            }
+        });
+        
+        // Mouse interaction
+        const mouse = new THREE.Vector2();
+        const raycaster = new THREE.Raycaster();
+        
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+        
+        function onMouseClick(event) {
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(notificationGroup.children, true);
+            
+            if (intersects.length > 0) {
+                const card = intersects[0].object.parent;
+                if (card.userData && card.userData.notification) {
+                    console.log('Clicked on notification:', card.userData.notification);
+                    // Add a pulse effect
+                    card.scale.set(1.1, 1.1, 1.1);
+                    setTimeout(() => {
+                        card.scale.set(1, 1, 1);
+                    }, 200);
+                }
+            }
+        }
+        
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('click', onMouseClick);
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            time += 0.01;
+            
+            // Rotate central object
+            centralGroup.rotation.y += 0.01;
+            centralGroup.rotation.x += 0.005;
+            
+            // Animate notification cards with more realistic movement
+            notificationGroup.children.forEach((card, index) => {
+                // Gentle floating motion
+                card.position.y = card.userData.originalY + Math.sin(time * 0.5 + index) * 0.1;
+                
+                // Subtle rotation
+                card.rotation.y += Math.sin(time + index) * 0.0005;
+                card.rotation.x += Math.cos(time * 0.7 + index) * 0.0003;
+                
+                // Hover effect
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects([card], true);
+                
+                if (intersects.length > 0 && !card.userData.hovered) {
+                    card.userData.hovered = true;
+                    card.scale.set(1.05, 1.05, 1.05);
+                } else if (intersects.length === 0 && card.userData.hovered) {
+                    card.userData.hovered = false;
+                    card.scale.set(1, 1, 1);
+                }
+            });
+            
+            // Animate particles around center
+            centralGroup.children.forEach((child, index) => {
+                if (child.geometry.type === 'SphereGeometry' && child.geometry.parameters.radius < 0.1) {
+                    child.rotation.x += 0.02;
+                    child.rotation.y += 0.01;
+                    child.position.y += Math.sin(time * 2 + index) * 0.01;
+                }
+            });
+            
+            // Animate Matrix text rain for all groups
+            [matrixGroup, matrixGroup2, matrixGroup3].forEach((group, groupIndex) => {
+                group.children.forEach((columnGroup, colIndex) => {
+                    columnGroup.children.forEach((textMesh, textIndex) => {
+                        // Move text down
+                        textMesh.position.y -= textMesh.userData.speed;
+                        
+                        // Reset position when it goes too low
+                        const resetThreshold = groupIndex === 0 ? -20 : (groupIndex === 1 ? -18 : -16);
+                        if (textMesh.position.y < resetThreshold) {
+                            textMesh.position.y = columnGroup.userData.resetY;
+                            // Randomize character and opacity
+                            textMesh.userData.char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                            textMesh.userData.opacity = Math.random() * 0.8 + 0.2;
+                        }
+                        
+                        // Update opacity for fading effect
+                        const fadeDistance = groupIndex === 0 ? 30 : (groupIndex === 1 ? 25 : 20);
+                        textMesh.material.opacity = textMesh.userData.opacity * (1 - Math.abs(textMesh.position.y) / fadeDistance);
+                        
+                        // Add slight random movement
+                        textMesh.position.x += (Math.random() - 0.5) * 0.01;
+                        textMesh.position.z += (Math.random() - 0.5) * 0.01;
+                    });
+                });
+            });
+            
+            // Animate vertical Matrix rain
+            matrixVerticalGroup.children.forEach((textMesh, index) => {
+                // Move text based on direction
+                textMesh.position.y += textMesh.userData.speed * textMesh.userData.direction;
+                
+                // Reset position when it goes too far
+                if (textMesh.position.y > 30 || textMesh.position.y < -30) {
+                    textMesh.position.y = textMesh.userData.originalY;
+                    textMesh.userData.char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                    textMesh.userData.opacity = Math.random() * 0.5 + 0.2;
+                }
+                
+                // Update opacity
+                textMesh.material.opacity = textMesh.userData.opacity * (1 - Math.abs(textMesh.position.y) / 40);
+                
+                // Add slight random movement
+                textMesh.position.x += (Math.random() - 0.5) * 0.005;
+                textMesh.position.z += (Math.random() - 0.5) * 0.005;
+            });
+            
+            // Animate Matrix particles
+            matrixParticles.children.forEach((particle, index) => {
+                // Rotate around the center
+                particle.userData.angle += particle.userData.speed;
+                particle.position.x = Math.cos(particle.userData.angle) * particle.userData.originalRadius;
+                particle.position.z = Math.sin(particle.userData.angle) * particle.userData.originalRadius;
+                
+                // Add vertical floating motion
+                particle.position.y += Math.sin(time * 2 + index) * 0.005;
+                
+                // Fade in and out
+                particle.material.opacity = 0.1 + Math.sin(time * 3 + index) * 0.2;
+            });
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Start animation
+        animate();
+    </script>
+</body>
+</html>
