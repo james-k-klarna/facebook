@@ -441,17 +441,17 @@
         // Create detailed ASCII art face using canvas texture
         const faceGroup = new THREE.Group();
         
-        // Create canvas for ASCII art face (100x100 pixels)
+        // Create canvas for detailed face (200x200 pixels for better detail)
         const faceCanvas = document.createElement('canvas');
-        faceCanvas.width = 100;
-        faceCanvas.height = 100;
+        faceCanvas.width = 200;
+        faceCanvas.height = 200;
         const faceCtx = faceCanvas.getContext('2d');
         
         // Clear canvas with transparent background
-        faceCtx.clearRect(0, 0, 100, 100);
+        faceCtx.clearRect(0, 0, 200, 200);
         
-        // Detailed ASCII art face pattern (50x50 grid for 100x100 pixels)
-        const facePattern = [
+        // Unused pattern - keeping for reference
+        const facePattern_old = [
             "                    ████████                    ",
             "                ████████████████                ",
             "            ████████████████████████            ",
@@ -503,52 +503,75 @@
             "████████████████████████████████████████████████"
         ];
         
-        const pixelSize = 2; // 100/50 = 2 pixels per character
-        const faceWidth = facePattern[0].length;
-        const faceHeight = facePattern.length;
+        // Draw face programmatically - looks up at camera from top view
+        const centerX = 100;
+        const centerY = 100;
         
-        // Draw detailed ASCII art to canvas
-        faceCtx.font = `${pixelSize}px monospace`;
-        faceCtx.textAlign = 'left';
-        faceCtx.textBaseline = 'top';
+        // Draw face outline (oval shape when viewed from above)
+        faceCtx.fillStyle = '#00ff00';
+        faceCtx.beginPath();
+        faceCtx.ellipse(centerX, centerY, 75, 90, 0, 0, Math.PI * 2);
+        faceCtx.fill();
         
-        facePattern.forEach((row, y) => {
-            for (let x = 0; x < row.length; x++) {
-                if (row[x] !== ' ') {
-                    const pixelX = x * pixelSize;
-                    const pixelY = y * pixelSize;
-                    
-                    // Define face regions for different colors
-                    const centerX = faceWidth / 2;
-                    const centerY = faceHeight / 2;
-                    const distanceFromCenter = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-                    
-                    // Eye regions (red) - positioned to look up at camera
-                    const leftEyeX = centerX - 8;
-                    const rightEyeX = centerX + 8;
-                    const eyeY = centerY - 5;
-                    const eyeRadius = 3;
-                    
-                    const leftEyeDistance = Math.sqrt((x - leftEyeX) ** 2 + (y - eyeY) ** 2);
-                    const rightEyeDistance = Math.sqrt((x - rightEyeX) ** 2 + (y - eyeY) ** 2);
-                    
-                    if (leftEyeDistance <= eyeRadius || rightEyeDistance <= eyeRadius) {
-                        faceCtx.fillStyle = '#ff0000'; // Red for eyes
-                    } else if (distanceFromCenter <= 20) {
-                        // Face outline (green)
-                        faceCtx.fillStyle = '#00ff00';
-                    } else if (distanceFromCenter <= 22) {
-                        // Face border (darker green)
-                        faceCtx.fillStyle = '#00cc00';
-                    } else {
-                        // Background (transparent)
-                        continue;
-                    }
-                    
-                    faceCtx.fillText(row[x], pixelX, pixelY);
-                }
-            }
-        });
+        // Draw darker green border
+        faceCtx.strokeStyle = '#00cc00';
+        faceCtx.lineWidth = 4;
+        faceCtx.beginPath();
+        faceCtx.ellipse(centerX, centerY, 75, 90, 0, 0, Math.PI * 2);
+        faceCtx.stroke();
+        
+        // Draw left eye (red, positioned to look up at camera)
+        const leftEyeX = centerX - 28;
+        const eyeY = centerY - 20; // Higher position for looking up
+        const eyeRadius = 10;
+        faceCtx.fillStyle = '#ff0000';
+        faceCtx.beginPath();
+        faceCtx.arc(leftEyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+        faceCtx.fill();
+        
+        // Draw right eye (red, positioned to look up at camera)
+        const rightEyeX = centerX + 28;
+        faceCtx.beginPath();
+        faceCtx.arc(rightEyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+        faceCtx.fill();
+        
+        // Draw nose (subtle, vertical line in center)
+        faceCtx.strokeStyle = '#00cc00';
+        faceCtx.lineWidth = 3;
+        faceCtx.beginPath();
+        faceCtx.moveTo(centerX, centerY + 5);
+        faceCtx.lineTo(centerX, centerY + 20);
+        faceCtx.stroke();
+        
+        // Draw nostrils
+        faceCtx.fillStyle = '#00cc00';
+        faceCtx.beginPath();
+        faceCtx.arc(centerX - 5, centerY + 15, 2, 0, Math.PI * 2);
+        faceCtx.fill();
+        faceCtx.beginPath();
+        faceCtx.arc(centerX + 5, centerY + 15, 2, 0, Math.PI * 2);
+        faceCtx.fill();
+        
+        // Draw mouth (smiling, curved)
+        faceCtx.strokeStyle = '#00cc00';
+        faceCtx.lineWidth = 4;
+        faceCtx.beginPath();
+        faceCtx.arc(centerX, centerY + 35, 18, 0.2, Math.PI - 0.2);
+        faceCtx.stroke();
+        
+        // Convert to pixelated look by scaling down and back up
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 100;
+        tempCanvas.height = 100;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // Copy face to smaller canvas
+        tempCtx.drawImage(faceCanvas, 0, 0, 100, 100);
+        
+        // Scale back up with nearest neighbor for pixelated effect
+        faceCtx.imageSmoothingEnabled = false;
+        faceCtx.clearRect(0, 0, 200, 200);
+        faceCtx.drawImage(tempCanvas, 0, 0, 200, 200);
         
         // Create texture from canvas
         const faceTexture = new THREE.CanvasTexture(faceCanvas);
@@ -557,7 +580,7 @@
         faceTexture.encoding = THREE.sRGBEncoding;
         
         // Create plane geometry for the face (flat, horizontal)
-        const faceGeometry = new THREE.PlaneGeometry(6, 6);
+        const faceGeometry = new THREE.PlaneGeometry(8, 8);
         const faceMaterial = new THREE.MeshBasicMaterial({ 
             map: faceTexture,
             transparent: true,
@@ -860,16 +883,23 @@
                     const intersection = faceIntersects[0];
                     const uv = intersection.uv;
                     
-                    // Convert UV coordinates to grid position (50x50 grid)
-                    const gridX = Math.floor(uv.x * 50);
-                    const gridY = Math.floor(uv.y * 50);
+                    // Convert UV coordinates to pixel position (200x200 canvas)
+                    const pixelX = Math.floor(uv.x * 200);
+                    const pixelY = Math.floor(uv.y * 200);
                     
-                    // Check if clicked on an eye
-                    const eyePositions = faceMesh.userData.eyePositions;
-                    const clickedEye = eyePositions.find(eye => eye.x === gridX && eye.y === gridY);
+                    // Check if clicked on an eye (left eye at ~72,80, right eye at ~128,80)
+                    const centerX = 100;
+                    const centerY = 100;
+                    const leftEyeX = centerX - 28;
+                    const rightEyeX = centerX + 28;
+                    const eyeY = centerY - 20;
+                    const eyeRadius = 10;
                     
-                    if (clickedEye) {
-                        console.log('Clicked on', clickedEye.type, 'eye');
+                    const leftEyeDistance = Math.sqrt((pixelX - leftEyeX) ** 2 + (pixelY - eyeY) ** 2);
+                    const rightEyeDistance = Math.sqrt((pixelX - rightEyeX) ** 2 + (pixelY - eyeY) ** 2);
+                    
+                    if (leftEyeDistance <= eyeRadius || rightEyeDistance <= eyeRadius) {
+                        console.log('Clicked on eye');
                         // Open new page with details about you
                         window.open('https://github.com/james-k-klarna', '_blank');
                         return;
