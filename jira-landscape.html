@@ -685,21 +685,8 @@
                     const pixelX = x * fontSize;
                     const pixelY = y * fontSize;
                     
-                    // Eye positions in detailed ASCII grid (rows 40-45, columns 25-30 left, 50-55 right)
-                    const leftEyeStartX = 25;
-                    const leftEyeEndX = 30;
-                    const rightEyeStartX = 50;
-                    const rightEyeEndX = 55;
-                    const eyeRowStart = 40;
-                    const eyeRowEnd = 45;
-                    const isLeftEye = (x >= leftEyeStartX && x <= leftEyeEndX) && (y >= eyeRowStart && y <= eyeRowEnd);
-                    const isRightEye = (x >= rightEyeStartX && x <= rightEyeEndX) && (y >= eyeRowStart && y <= eyeRowEnd);
-                    
-                    if (isLeftEye || isRightEye) {
-                        faceCtx.fillStyle = '#ff0000'; // Red for eyes
-                    } else {
-                        faceCtx.fillStyle = '#00ff00'; // Green for face
-                    }
+                    // All face characters are green (no special eye coloring)
+                    faceCtx.fillStyle = '#00ff00'; // Green for face
                     
                     faceCtx.fillText(char, pixelX, pixelY);
                 }
