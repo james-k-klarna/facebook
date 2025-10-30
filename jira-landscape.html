@@ -899,9 +899,9 @@
                     const rightEyeDistance = Math.sqrt((pixelX - rightEyeX) ** 2 + (pixelY - eyeY) ** 2);
                     
                     if (leftEyeDistance <= eyeRadius || rightEyeDistance <= eyeRadius) {
-                        console.log('Clicked on eye');
-                        // Open new page with details about you
-                        window.open('https://github.com/james-k-klarna', '_blank');
+                        console.log('Clicked on eye - opening case file');
+                        // Open John Smith case file
+                        window.location.href = 'john-smith.html';
                         return;
                     }
                 }
@@ -1013,10 +1013,11 @@
                 textMesh.position.z += (Math.random() - 0.5) * 0.005;
             });
             
-            // Animate face (subtle floating effect)
+            // Face should not rotate - keep it static
             faceGroup.children.forEach((faceMesh, index) => {
-                faceMesh.position.y += Math.sin(time * 2 + index) * 0.001;
-                faceMesh.rotation.y += 0.005;
+                // No rotation - face stays static
+                // Subtle floating effect only
+                faceMesh.position.y = -10 + Math.sin(time * 2 + index) * 0.001;
                 
                 // Add hover effect for the face
                 raycaster.setFromCamera(mouse, camera);
