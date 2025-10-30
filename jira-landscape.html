@@ -441,7 +441,7 @@
         // Create detailed ASCII art face using canvas texture
         const faceGroup = new THREE.Group();
         
-        // Create canvas for detailed face (200x200 pixels for better detail)
+        // Create canvas for detailed ASCII face
         const faceCanvas = document.createElement('canvas');
         const faceCtx = faceCanvas.getContext('2d');
         
@@ -507,11 +507,9 @@
         faceCtx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
         
         // Draw ASCII art terminal-style face - facial recognition look
-        const centerX = faceCanvas.width / 2;
-        const centerY = faceCanvas.height / 2;
         faceCtx.font = `${fontSize}px monospace`;
-        faceCtx.textAlign = 'center';
-        faceCtx.textBaseline = 'middle';
+        faceCtx.textAlign = 'left';
+        faceCtx.textBaseline = 'top';
         
         // Detailed ASCII art face pattern - terminal/facial recognition style
         const asciiStyle1 = [
@@ -684,8 +682,8 @@
             for (let x = 0; x < row.length; x++) {
                 const char = row[x];
                 if (char !== ' ') {
-                    const pixelX = centerX - (row.length * fontSize) / 2 + (x * fontSize);
-                    const pixelY = centerY - (asciiFace.length * fontSize) / 2 + (y * fontSize);
+                    const pixelX = x * fontSize;
+                    const pixelY = y * fontSize;
                     
                     // Eye positions in detailed ASCII grid (rows 40-45, columns 25-30 left, 50-55 right)
                     const leftEyeStartX = 25;
@@ -713,17 +711,24 @@
         faceCtx.lineWidth = 0.5;
         faceCtx.globalAlpha = 0.3;
         
-        for (let i = 0; i < 5; i++) {
+        const gridCols = 10;
+        const gridRows = 20;
+        const colSpacing = faceCanvas.width / gridCols;
+        const rowSpacing = faceCanvas.height / gridRows;
+        
+        // Vertical grid lines
+        for (let i = 0; i <= gridCols; i++) {
             faceCtx.beginPath();
-            faceCtx.moveTo(centerX - 40 + (i * 20), centerY - 50);
-            faceCtx.lineTo(centerX - 40 + (i * 20), centerY + 50);
+            faceCtx.moveTo(i * colSpacing, 0);
+            faceCtx.lineTo(i * colSpacing, faceCanvas.height);
             faceCtx.stroke();
         }
         
-        for (let i = 0; i < 5; i++) {
+        // Horizontal grid lines
+        for (let i = 0; i <= gridRows; i++) {
             faceCtx.beginPath();
-            faceCtx.moveTo(centerX - 40, centerY - 50 + (i * 25));
-            faceCtx.lineTo(centerX + 40, centerY - 50 + (i * 25));
+            faceCtx.moveTo(0, i * rowSpacing);
+            faceCtx.lineTo(faceCanvas.width, i * rowSpacing);
             faceCtx.stroke();
         }
         
