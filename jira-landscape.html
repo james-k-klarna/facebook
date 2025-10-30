@@ -1110,47 +1110,11 @@
                     
                     console.log('UV coordinates:', uv);
                     
-                    // Convert UV coordinates to pixel position
-                    const patternWidth = 81;
-                    const patternHeight = 160;
-                    const fontSize = 2;
-                    const pixelX = Math.floor(uv.x * (patternWidth * fontSize));
-                    const pixelY = Math.floor(uv.y * (patternHeight * fontSize));
-                    
-                    console.log('Pixel position:', pixelX, pixelY);
-                    
-                    // Check if clicked on an eye
-                    // For ASCII face: eyes are at rows 6-8 (y: 6-8), columns 8-11 (left, x: 8-11) and 17-20 (right, x: 17-20)
-                    // For detailed ASCII pattern: calculate character position
-                    const charX = Math.floor(pixelX / fontSize);
-                    const charY = Math.floor(pixelY / fontSize);
-                    
-                    console.log('Character position in ASCII grid:', charX, charY);
-                    
-                    // Eye positions in detailed ASCII grid (rows 40-45, columns 25-30 left, 50-55 right)
-                    const leftEyeStartX = 25;
-                    const leftEyeEndX = 30;
-                    const rightEyeStartX = 50;
-                    const rightEyeEndX = 55;
-                    const eyeRowStart = 40;
-                    const eyeRowEnd = 45;
-                    
-                    const isLeftEye = (charX >= leftEyeStartX && charX <= leftEyeEndX) && 
-                                     (charY >= eyeRowStart && charY <= eyeRowEnd);
-                    const isRightEye = (charX >= rightEyeStartX && charX <= rightEyeEndX) && 
-                                      (charY >= eyeRowStart && charY <= eyeRowEnd);
-                    
-                    console.log('Is left eye?', isLeftEye);
-                    console.log('Is right eye?', isRightEye);
-                    
-                    if (isLeftEye || isRightEye) {
-                        console.log('✓✓✓ EYE CLICKED - Opening case file! ✓✓✓');
-                        // Open John Smith case file
-                        window.location.href = 'john-smith.html';
-                        return;
-                    } else {
-                        console.log('Face clicked but not on eye region');
-                    }
+                    // Any click on the face opens the case file
+                    console.log('✓✓✓ FACE CLICKED - Opening case file! ✓✓✓');
+                    // Open John Smith case file
+                    window.location.href = 'john-smith.html';
+                    return;
                 } else {
                     console.log('Face mesh does not have isFace userData');
                 }
