@@ -438,67 +438,93 @@
         centralGroup.position.set(0, 0, 0);
         scene.add(centralGroup);
         
-        // Create pixelized face below the Jira image
+        // Create ASCII art face using canvas texture
         const faceGroup = new THREE.Group();
         
-        // Create ASCII/pixelized face using small cubes
-        const faceData = [
+        // Create canvas for ASCII art face
+        const faceCanvas = document.createElement('canvas');
+        faceCanvas.width = 128;
+        faceCanvas.height = 128;
+        const faceCtx = faceCanvas.getContext('2d');
+        
+        // Clear canvas with transparent background
+        faceCtx.clearRect(0, 0, 128, 128);
+        
+        // ASCII art face pattern (8x8 grid)
+        const facePattern = [
             "  ████  ",
             " ██████ ",
             "████████",
             "██  ██  ",
             "██  ██  ",
             " ██████ ",
-            "  ████  "
+            "  ████  ",
+            "   ██   "
         ];
         
-        const pixelSize = 0.3;
-        const faceWidth = faceData[0].length;
-        const faceHeight = faceData.length;
+        const pixelSize = 16; // 128/8 = 16 pixels per character
+        const faceWidth = facePattern[0].length;
+        const faceHeight = facePattern.length;
         
-        faceData.forEach((row, y) => {
+        // Draw ASCII art to canvas
+        faceCtx.font = `${pixelSize}px monospace`;
+        faceCtx.textAlign = 'left';
+        faceCtx.textBaseline = 'top';
+        
+        facePattern.forEach((row, y) => {
             for (let x = 0; x < row.length; x++) {
                 if (row[x] !== ' ') {
-                    const pixelGeometry = new THREE.BoxGeometry(pixelSize, pixelSize, pixelSize);
-                    let pixelMaterial;
+                    const pixelX = x * pixelSize;
+                    const pixelY = y * pixelSize;
                     
                     // Check if this is an eye position (red eyes)
                     const isLeftEye = (x === 2 || x === 3) && (y === 3 || y === 4);
                     const isRightEye = (x === 6 || x === 7) && (y === 3 || y === 4);
                     
                     if (isLeftEye || isRightEye) {
-                        pixelMaterial = new THREE.MeshBasicMaterial({ 
-                            color: 0xff0000,
-                            transparent: true,
-                            opacity: 0.9
-                        });
+                        faceCtx.fillStyle = '#ff0000'; // Red for eyes
                     } else {
-                        pixelMaterial = new THREE.MeshBasicMaterial({ 
-                            color: 0x00ff00,
-                            transparent: true,
-                            opacity: 0.8
-                        });
+                        faceCtx.fillStyle = '#00ff00'; // Green for face
                     }
                     
-                    const pixel = new THREE.Mesh(pixelGeometry, pixelMaterial);
-                    pixel.position.set(
-                        (x - faceWidth/2) * pixelSize,
-                        -(y - faceHeight/2) * pixelSize,
-                        0
-                    );
-                    
-                    // Add click functionality for eyes
-                    if (isLeftEye || isRightEye) {
-                        pixel.userData = { isEye: true, eyeType: isLeftEye ? 'left' : 'right' };
-                    }
-                    
-                    faceGroup.add(pixel);
+                    faceCtx.fillText(row[x], pixelX, pixelY);
                 }
             }
         });
         
-        // Position face below the Jira image
-        faceGroup.position.set(0, -8, 0);
+        // Create texture from canvas
+        const faceTexture = new THREE.CanvasTexture(faceCanvas);
+        faceTexture.minFilter = THREE.NearestFilter;
+        faceTexture.magFilter = THREE.NearestFilter;
+        faceTexture.encoding = THREE.sRGBEncoding;
+        
+        // Create plane geometry for the face
+        const faceGeometry = new THREE.PlaneGeometry(4, 4);
+        const faceMaterial = new THREE.MeshBasicMaterial({ 
+            map: faceTexture,
+            transparent: true,
+            opacity: 0.9
+        });
+        
+        const faceMesh = new THREE.Mesh(faceGeometry, faceMaterial);
+        faceMesh.position.set(0, -8, 0);
+        
+        // Add click functionality for eyes
+        faceMesh.userData = { 
+            isFace: true,
+            eyePositions: [
+                { x: 2, y: 3, type: 'left' },
+                { x: 3, y: 3, type: 'left' },
+                { x: 6, y: 3, type: 'right' },
+                { x: 7, y: 3, type: 'right' },
+                { x: 2, y: 4, type: 'left' },
+                { x: 3, y: 4, type: 'left' },
+                { x: 6, y: 4, type: 'right' },
+                { x: 7, y: 4, type: 'right' }
+            ]
+        };
+        
+        faceGroup.add(faceMesh);
         scene.add(faceGroup);
         
         // Create Matrix-style green text rain effect
@@ -724,8 +750,8 @@
         
         // No ground plane - creating a dimensionless void
         
-        // Set camera position for top view
-        camera.position.set(0, 25, 0);
+        // Set camera position for top view (zoomed out twice as much)
+        camera.position.set(0, 50, 0);
         controls.target.set(0, 0, 0);
         camera.lookAt(0, 0, 0);
         
@@ -754,15 +780,29 @@
         function onMouseClick(event) {
             raycaster.setFromCamera(mouse, camera);
             
-            // Check for eye clicks first
+            // Check for face clicks first
             const faceIntersects = raycaster.intersectObjects(faceGroup.children, true);
             if (faceIntersects.length > 0) {
-                const pixel = faceIntersects[0].object;
-                if (pixel.userData && pixel.userData.isEye) {
-                    console.log('Clicked on', pixel.userData.eyeType, 'eye');
-                    // Open new page with details about you
-                    window.open('https://github.com/james-k-klarna', '_blank');
-                    return;
+                const faceMesh = faceIntersects[0].object;
+                if (faceMesh.userData && faceMesh.userData.isFace) {
+                    // Calculate which part of the face was clicked
+                    const intersection = faceIntersects[0];
+                    const uv = intersection.uv;
+                    
+                    // Convert UV coordinates to grid position
+                    const gridX = Math.floor(uv.x * 8);
+                    const gridY = Math.floor(uv.y * 8);
+                    
+                    // Check if clicked on an eye
+                    const eyePositions = faceMesh.userData.eyePositions;
+                    const clickedEye = eyePositions.find(eye => eye.x === gridX && eye.y === gridY);
+                    
+                    if (clickedEye) {
+                        console.log('Clicked on', clickedEye.type, 'eye');
+                        // Open new page with details about you
+                        window.open('https://github.com/james-k-klarna', '_blank');
+                        return;
+                    }
                 }
             }
             
@@ -872,23 +912,21 @@
                 textMesh.position.z += (Math.random() - 0.5) * 0.005;
             });
             
-            // Animate face pixels (subtle floating effect)
-            faceGroup.children.forEach((pixel, index) => {
-                pixel.position.y += Math.sin(time * 2 + index) * 0.001;
-                pixel.rotation.y += 0.01;
+            // Animate face (subtle floating effect)
+            faceGroup.children.forEach((faceMesh, index) => {
+                faceMesh.position.y += Math.sin(time * 2 + index) * 0.001;
+                faceMesh.rotation.y += 0.005;
                 
-                // Add hover effect for eyes
-                if (pixel.userData && pixel.userData.isEye) {
-                    raycaster.setFromCamera(mouse, camera);
-                    const intersects = raycaster.intersectObjects([pixel]);
-                    
-                    if (intersects.length > 0) {
-                        pixel.scale.set(1.2, 1.2, 1.2);
-                        pixel.material.opacity = 1.0;
-                    } else {
-                        pixel.scale.set(1, 1, 1);
-                        pixel.material.opacity = 0.9;
-                    }
+                // Add hover effect for the face
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects([faceMesh]);
+                
+                if (intersects.length > 0) {
+                    faceMesh.scale.set(1.05, 1.05, 1.05);
+                    faceMesh.material.opacity = 1.0;
+                } else {
+                    faceMesh.scale.set(1, 1, 1);
+                    faceMesh.material.opacity = 0.9;
                 }
             });
             
