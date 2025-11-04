@@ -354,27 +354,9 @@
                 console.log('Loading progress:', Math.round(progress.loaded / progress.total * 100) + '%');
             },
             function(error) {
-                console.error('Error loading image from GitHub:', error);
-                console.log('Trying local fallback...');
-                
-                // Fallback to local file if GitHub fails
-                textureLoader.load('./realjira.png', 
-                    function(localTexture) {
-                        console.log('Local image loaded successfully');
-                        localTexture.encoding = THREE.sRGBEncoding;
-                        localTexture.flipY = false;
-                        localTexture.wrapS = THREE.ClampToEdgeWrapping;
-                        localTexture.wrapT = THREE.ClampToEdgeWrapping;
-                        
-                        imageMaterial.map = localTexture;
-                        imageMaterial.needsUpdate = true;
-                    },
-                    undefined,
-                    function(localError) {
-                        console.error('Both GitHub and local image failed:', localError);
-                        console.log('Using fallback texture');
-                    }
-                );
+                console.error('%c⚠ Image failed to load from GitHub', 'color: #ffaa00; font-weight: bold;', error);
+                console.log('%cUsing fallback texture (colored placeholder)', 'color: #888;');
+                // Fallback texture is already set, no action needed
             }
         );
         
@@ -721,7 +703,8 @@
         
         faceCtx.globalAlpha = 1.0;
         
-        console.log('ASCII face drawn successfully - terminal/facial recognition style');
+        console.log('%c✅ ASCII Face Generated', 'color: #00ff00; font-weight: bold; font-size: 12px;');
+        console.log(`%c   Pattern: ${patternWidth}x${patternHeight} characters | Canvas: ${faceCanvas.width}x${faceCanvas.height}px`, 'color: #00ccff;');
         
         // Old drawing code removed - using ASCII art above
         
