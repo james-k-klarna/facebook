@@ -1087,39 +1087,35 @@
         }
         
         function onMouseClick(event) {
-            console.log('=== CLICK EVENT ===');
-            console.log('Mouse position:', mouse.x, mouse.y);
-            console.log('Camera position:', camera.position);
+            console.group('%c🔍 CLICK EVENT', 'color: #00ff00; font-size: 14px; font-weight: bold;');
+            console.log('%cMouse:', 'color: #00ccff; font-weight: bold;', `x: ${mouse.x.toFixed(3)}, y: ${mouse.y.toFixed(3)}`);
+            console.log('%cCamera:', 'color: #00ccff; font-weight: bold;', `position: (${camera.position.x.toFixed(1)}, ${camera.position.y.toFixed(1)}, ${camera.position.z.toFixed(1)})`);
             
             raycaster.setFromCamera(mouse, camera);
             
             // Check for face clicks first
-            console.log('Checking face intersections...');
             const faceIntersects = raycaster.intersectObjects(faceGroup.children, true);
-            console.log('Face intersects found:', faceIntersects.length);
             
             if (faceIntersects.length > 0) {
                 const faceMesh = faceIntersects[0].object;
-                console.log('Face mesh clicked:', faceMesh);
-                console.log('Face mesh userData:', faceMesh.userData);
                 
                 if (faceMesh.userData && faceMesh.userData.isFace) {
-                    // Calculate which part of the face was clicked
                     const intersection = faceIntersects[0];
                     const uv = intersection.uv;
                     
-                    console.log('UV coordinates:', uv);
+                    console.log('%c✓ Face detected', 'color: #00ff00; font-weight: bold;');
+                    console.log('%cUV coordinates:', 'color: #ffff00;', `u: ${uv.x.toFixed(3)}, v: ${uv.y.toFixed(3)}`);
+                    console.log('%c🎯 Opening case file...', 'color: #ff0000; font-size: 16px; font-weight: bold;');
+                    console.groupEnd();
                     
-                    // Any click on the face opens the case file
-                    console.log('✓✓✓ FACE CLICKED - Opening case file! ✓✓✓');
                     // Open John Smith case file
                     window.location.href = 'john-smith.html';
                     return;
                 } else {
-                    console.log('Face mesh does not have isFace userData');
+                    console.log('%c⚠ Face mesh missing userData', 'color: #ffaa00;');
                 }
             } else {
-                console.log('No face intersection detected');
+                console.log('%cNo face intersection', 'color: #888;');
             }
             
             // Check for notification card clicks
@@ -1127,7 +1123,7 @@
             if (intersects.length > 0) {
                 const card = intersects[0].object.parent;
                 if (card.userData && card.userData.notification) {
-                    console.log('Clicked on notification:', card.userData.notification);
+                    console.log('%c📋 Notification clicked:', 'color: #00ccff; font-weight: bold;', card.userData.notification.title || 'Unknown');
                     // Add a pulse effect
                     card.scale.set(1.1, 1.1, 1.1);
                     setTimeout(() => {
@@ -1135,6 +1131,8 @@
                     }, 200);
                 }
             }
+            
+            console.groupEnd();
         }
         
         window.addEventListener('mousemove', onMouseMove);
